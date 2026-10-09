@@ -16,8 +16,8 @@ EvalLogCapture::EvalLogCapture(nix::Logger *inner) : inner(inner) {}
 /* Lives for the rest of the worker process, like the logger it wraps. */
 auto EvalLogCapture::install() -> EvalLogCapture & {
     auto *self = new EvalLogCapture(
-        nix::logger); // NOLINT(cppcoreguidelines-owning-memory)
-    nix::logger = self;
+        nix::logger.release()); // NOLINT(cppcoreguidelines-owning-memory)
+    nix::logger.reset(self);
     return *self;
 }
 
