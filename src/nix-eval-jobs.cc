@@ -29,6 +29,7 @@
 #include <nix/util/terminal.hh>
 #ifdef __linux__
 #include <nix/util/linux-namespaces.hh>
+#include <sched.h>
 #include <nix/util/users.hh>
 #endif
 #include <nlohmann/json.hpp>
@@ -571,7 +572,10 @@ auto main(int argc, char **argv) -> int {
            from stripping ro/nosuid/nodev on the host's /nix/store mount. */
         if (nix::isRootUser()) {
             try {
-                nix::tryEnterPrivateMountNamespace();
+                nix::saveMountNamespace();
+                if (unshare(CLONE_NEWNS) == -1) {
+                    throw nix::SysError("setting up a private mount namespace");
+                }
             } catch (nix::Error &e) {
                 nix::warn("failed to set up a private mount namespace: %s",
                           e.msg());
